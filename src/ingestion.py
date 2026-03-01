@@ -1,14 +1,8 @@
 import uuid
+import json
 import fitz
 from src.embedder import embed
 from src import endee_client as db
-
-PRECISION_LEVELS = {
-    "max_accuracy": "FLOAT32",
-    "balanced": "FLOAT16",
-    "compressed": "INT8",
-    "minimal": "BINARY"
-}
 
 
 def load_text(path):
@@ -36,30 +30,32 @@ def ingest(file_path, index_name, metric="cosine", precision="FLOAT32"):
 
     try:
         db.create_index(index_name, dims=384, metric=metric, precision=precision)
-        print(f"[Endee] Created index '{index_name}' — metric={metric}, precision={precision}, dims=384")
+        print(f"[Endee] Created index '{index_name}' — metric={metric}, precision={precision}")
     except Exception:
-        print(f"[Endee] Index '{index_name}' already exists, upserting into it")
+        print(f"[Endee] Index '{index_name}' already exists, appending vectors")
 
     vectors = embed(chunks)
 
     payload = []
     for i, (vec, chunk) in enumerate(zip(vectors, chunks)):
+        metadata = {
+            "text": chunk,
+            "source": source,
+            "chunk_id": i,
+            "word_count": len(chunk.split())
+        }
         payload.append({
             "id": str(uuid.uuid4()),
             "vector": vec,
-            "metadata": {
-                "text": chunk,
-                "source": source,
-                "chunk_id": i,
-                "word_count": len(chunk.split())
-            }
+            "metadata": metadata,
+            "filter": {"source": source, "chunk_id": i}
         })
 
     batch_size = 64
     for i in range(0, len(payload), batch_size):
         batch = payload[i: i + batch_size]
-        db.upsert(index_name, batch)
-        print(f"[Endee] Upserted batch {i // batch_size + 1} ({len(batch)} vectors)")
+        db.insert(index_name, batch)
+        print(f"[Endee] Inserted batch {i // batch_size + 1} — {len(batch)} vectors")
 
-    print(f"[Endee] Ingestion complete — {len(payload)} chunks indexed from '{source}'")
+    print(f"[Endee] Done — {len(payload)} chunks from '{source}' in index '{index_name}'")
     return len(payload)

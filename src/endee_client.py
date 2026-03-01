@@ -1,5 +1,7 @@
 import os
+import json
 import requests
+import msgpack
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -7,67 +9,93 @@ load_dotenv()
 base_url = os.getenv("ENDEE_URL", "http://localhost:8080")
 auth_token = os.getenv("ENDEE_AUTH_TOKEN", "")
 
+PRECISION_MAP = {
+    "FLOAT32": "float32",
+    "FLOAT16": "float16",
+    "INT16":   "int16",
+    "INT8":    "int8",
+    "BINARY":  "binary",
+}
 
-def _headers():
-    h = {"Content-Type": "application/json"}
+SPACE_MAP = {
+    "cosine":        "cosine",
+    "L2":            "l2",
+    "inner_product": "ip",
+}
+
+
+def _headers(content_type="application/json"):
+    h = {"Content-Type": content_type}
     if auth_token:
         h["Authorization"] = auth_token
     return h
 
 
 def create_index(name, dims=384, metric="cosine", precision="FLOAT32"):
-    """
-    Create a named vector index.
-
-    precision options (Endee quantization levels):
-      BINARY   – smallest, fastest, lowest accuracy
-      INT8     – 4x smaller than FLOAT32, great for large corpora
-      INT16    – balanced compression
-      FLOAT16  – half precision, near-FLOAT32 quality
-      FLOAT32  – full precision (default for best accuracy)
-
-    metric options: cosine | L2 | inner_product
-    """
     payload = {
-        "name": name,
-        "dimension": dims,
-        "metric": metric,
-        "precision": precision
+        "index_name": name,
+        "dim": dims,
+        "space_type": SPACE_MAP.get(metric, "cosine"),
+        "precision": PRECISION_MAP.get(precision, "float32")
     }
     resp = requests.post(f"{base_url}/api/v1/index/create", json=payload, headers=_headers())
     resp.raise_for_status()
-    return resp.json()
+    return resp.text
 
 
-def upsert(index_name, vectors):
+def insert(index_name, vectors):
     """
-    Insert or update vectors in an index.
-    Each vector dict: { id, vector, metadata }
-    Metadata can hold any key-value pairs for filtering.
+    vectors: list of dicts with keys:
+      id     – unique string ID
+      vector – list of floats (must match index dims)
+      meta   – dict (will be JSON-serialised to string for Endee)
+      filter – optional dict for metadata filtering (serialised to JSON string)
     """
-    payload = {"vectors": vectors}
-    resp = requests.post(f"{base_url}/api/v1/index/{index_name}/upsert", json=payload, headers=_headers())
+    payload = []
+    for v in vectors:
+        entry = {
+            "id": v["id"],
+            "vector": v["vector"],
+            "meta": json.dumps(v.get("metadata", {})),
+        }
+        if v.get("filter"):
+            entry["filter"] = json.dumps(v["filter"])
+        payload.append(entry)
+
+    resp = requests.post(
+        f"{base_url}/api/v1/index/{index_name}/vector/insert",
+        json=payload,
+        headers=_headers()
+    )
     resp.raise_for_status()
-    return resp.json()
+    return resp.status_code
 
 
 def search(index_name, query_vector, top_k=5, filters=None):
     """
-    Approximate Nearest Neighbor search.
+    filters: list of filter dicts in Endee array format, e.g.:
+      [{"source": {"$eq": "report.pdf"}}]
+      [{"chunk_id": {"$range": [0, 10]}}]
+      [{"source": {"$in": ["a.pdf", "b.pdf"]}}]
 
-    filters use Endee's query operators:
-      $eq    – exact match        : {"source": {"$eq": "report.pdf"}}
-      $in    – value in list      : {"category": {"$in": ["finance", "legal"]}}
-      $range – numeric range      : {"chunk_id": {"$range": [0, 10]}}
-
-    Returns ranked results with cosine similarity scores.
+    Returns a decoded list of result dicts from msgpack response.
     """
-    payload = {"vector": query_vector, "top_k": top_k}
+    payload = {
+        "vector": query_vector,
+        "k": top_k
+    }
     if filters:
-        payload["filter"] = filters
-    resp = requests.post(f"{base_url}/api/v1/index/{index_name}/search", json=payload, headers=_headers())
+        payload["filter"] = json.dumps(filters)
+
+    resp = requests.post(
+        f"{base_url}/api/v1/index/{index_name}/search",
+        json=payload,
+        headers=_headers()
+    )
     resp.raise_for_status()
-    return resp.json()
+
+    raw = msgpack.unpackb(resp.content, raw=False)
+    return raw
 
 
 def list_indexes():
@@ -77,13 +105,12 @@ def list_indexes():
 
 
 def delete_index(index_name):
-    resp = requests.delete(f"{base_url}/api/v1/index/{index_name}", headers=_headers())
+    resp = requests.delete(f"{base_url}/api/v1/index/{index_name}/delete", headers=_headers())
     resp.raise_for_status()
-    return resp.json()
+    return resp.text
 
 
 def index_info(index_name):
-    """Fetch metadata and stats for a single index."""
-    resp = requests.get(f"{base_url}/api/v1/index/{index_name}", headers=_headers())
+    resp = requests.get(f"{base_url}/api/v1/index/{index_name}/info", headers=_headers())
     resp.raise_for_status()
     return resp.json()
