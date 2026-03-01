@@ -2,7 +2,7 @@ import json
 from src.embedder import embed_one
 from src import endee_client as db
 
-MIN_SCORE = 0.35
+MIN_SCORE = 0.10
 
 
 def _parse_hit(match):

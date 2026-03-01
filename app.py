@@ -213,8 +213,8 @@ for msg in st.session_state.messages:
         st.markdown(f"<div class='chat-user'>🙋 {msg['content']}</div>", unsafe_allow_html=True)
     else:
         confidence = msg.get("top_score", 0)
-        badge_class = "badge" if confidence >= 0.6 else "badge warn-badge"
-        label = "high confidence" if confidence >= 0.6 else "low confidence"
+        badge_class = "badge" if confidence >= 0.20 else "badge warn-badge"
+        label = "high confidence" if confidence >= 0.20 else "low confidence"
         st.markdown(
             f"<div class='chat-ai'>🤖 {msg['content']}<br><br>"
             f"<span class='{badge_class}'>Endee score: {confidence:.2f} · {label}</span></div>",
