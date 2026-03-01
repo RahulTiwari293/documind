@@ -1,0 +1,57 @@
+Artificial Intelligence and Machine Learning: A Comprehensive Overview
+
+Artificial intelligence (AI) is the simulation of human intelligence processes by machines, particularly computer systems. These processes include learning, reasoning, problem-solving, perception, and language understanding.
+
+Machine learning (ML) is a subset of AI that allows computer systems to learn and improve from experience without being explicitly programmed. Instead of writing specific rules, ML systems are trained on data to recognize patterns and make decisions.
+
+Neural Networks and Deep Learning
+
+A neural network is a computational model inspired by the structure of the human brain. It consists of layers of interconnected nodes, or "neurons," that process information. Deep learning refers to neural networks with many layers, enabling the model to learn increasingly complex features from raw data.
+
+Convolutional Neural Networks (CNNs) are specialized for image recognition tasks. Recurrent Neural Networks (RNNs) are designed for sequential data such as text and speech. Transformers, which power modern large language models (LLMs), use a self-attention mechanism to process entire sequences simultaneously.
+
+Large Language Models (LLMs)
+
+Large language models are neural networks trained on massive text datasets to generate and understand human language. Examples include GPT-4, LLaMA, and Gemini. These models are pre-trained using self-supervised learning (predicting the next word), then fine-tuned for specific tasks using reinforcement learning from human feedback (RLHF).
+
+LLMs exhibit emergent abilities — capabilities that were not explicitly trained for, such as multi-step reasoning, code generation, and few-shot learning.
+
+Retrieval-Augmented Generation (RAG)
+
+RAG is a technique that enhances LLMs by grounding their responses in relevant external documents retrieved at query time. Instead of relying solely on the knowledge compressed into model weights during training, a RAG system retrieves the top-k relevant passages from a vector database and injects them as context before the LLM generates a response.
+
+RAG solves two key limitations of LLMs: knowledge cutoffs (the model only knows information up to its training date) and hallucinations (generating plausible but factually incorrect information). By providing verified, retrieved context, RAG dramatically improves factual accuracy on domain-specific tasks.
+
+Vector Databases
+
+A vector database stores and indexes high-dimensional numerical vectors. These vectors (also called embeddings) are dense mathematical representations of text, images, or other data, produced by embedding models such as SentenceTransformers or OpenAI's text-embedding models.
+
+The primary operation in a vector database is Approximate Nearest Neighbor (ANN) search, which finds the vectors most similar to a given query vector, typically using distance metrics such as cosine similarity, Euclidean (L2) distance, or inner product.
+
+Endee is an open-source, high-performance vector database designed for speed and efficiency. It uses the HNSW (Hierarchical Navigable Small World) indexing algorithm to achieve sub-5ms query latency on millions of vectors. Endee supports five quantization levels (BINARY, INT8, INT16, FLOAT16, FLOAT32) and hybrid search combining dense vectors with sparse keyword search.
+
+Embeddings and Semantic Search
+
+Embeddings are fixed-length numerical vectors that capture semantic meaning. Sentences with similar meaning cluster together in the embedding space. Semantic search exploits this property: instead of matching exact keywords, it retrieves documents whose embeddings are closest to the query embedding.
+
+The SentenceTransformers library provides pre-trained models (such as all-MiniLM-L6-v2, which produces 384-dimensional embeddings) that are lightweight, fast, and effective for semantic similarity tasks.
+
+Reinforcement Learning
+
+Reinforcement learning (RL) is a type of ML where an agent learns to make decisions by interacting with an environment. The agent receives rewards for beneficial actions and penalties for harmful ones, gradually learning a policy that maximizes cumulative reward. RL powers applications like game-playing agents (AlphaGo), robotics, and fine-tuning language models via RLHF.
+
+Common AI Use Cases
+
+1. Natural Language Processing (NLP): sentiment analysis, machine translation, summarization, question answering.
+2. Computer Vision: object detection, facial recognition, medical imaging, autonomous vehicles.
+3. Recommendation Systems: collaborative filtering and content-based filtering using item and user embeddings.
+4. Anomaly Detection: identifying unusual patterns in cybersecurity, finance, and manufacturing.
+5. Generative AI: creating images, music, text, and code using models such as diffusion models and LLMs.
+
+Evaluation Metrics
+
+Classification models are evaluated using accuracy, precision, recall, F1-score, and AUC-ROC. Regression models use mean absolute error (MAE) and root mean square error (RMSE). RAG systems are evaluated using metrics like faithfulness (is the answer grounded in context?), answer relevance, and context recall.
+
+Ethics and Responsible AI
+
+AI systems can inherit and amplify biases present in training data. Important principles in responsible AI include: fairness (preventing discriminatory outcomes), explainability (making model decisions interpretable), privacy (protecting training data), and safety (ensuring models behave as intended). Techniques such as differential privacy, adversarial testing, and model cards help address these challenges.
