@@ -8,3 +8,4 @@ __pycache__/
 endee_data/
 data/
 *.tmp
+.streamlit/secrets.toml

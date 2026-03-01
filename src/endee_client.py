@@ -2,12 +2,10 @@ import os
 import json
 import requests
 import msgpack
-from dotenv import load_dotenv
+from src.config import get_secret
 
-load_dotenv()
-
-base_url = os.getenv("ENDEE_URL", "http://localhost:8080")
-auth_token = os.getenv("ENDEE_AUTH_TOKEN", "")
+base_url = get_secret("ENDEE_URL", "ENDEE_URL") or "http://localhost:8080"
+auth_token = get_secret("ENDEE_AUTH_TOKEN", "ENDEE_AUTH_TOKEN") or ""
 
 PRECISION_MAP = {
     "FLOAT32": "float32",

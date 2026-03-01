@@ -1,11 +1,9 @@
 import os
 from groq import Groq
-from dotenv import load_dotenv
+from src.config import get_secret
 
-load_dotenv()
-
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-model = os.getenv("GROQ_MODEL", "llama3-8b-8192")
+client = Groq(api_key=get_secret("GROQ_API_KEY", "GROQ_API_KEY"))
+model = get_secret("GROQ_MODEL", "GROQ_MODEL") or "llama-3.1-8b-instant"
 
 def generate(question, context_chunks):
     context = "\n\n".join(
